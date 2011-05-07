@@ -22,13 +22,14 @@
 (function($) {
   $.fn.presentation = function(options) {
     var config = {
-			slide: '.slide',
-			pagerClass: 'nav-pager',
-			prevNextClass: 'nav-prev-next',
-			prevText: 'Previous',
-			nextText: 'Next',
-			transition: "fade"
-		};
+            slide: '.slide',
+            pagerClass: 'nav-pager',
+            prevNextClass: 'nav-prev-next',
+            prevText: 'Previous',
+            nextText: 'Next',
+            transition: "fade",
+            slideIds: []
+        };
     $(this).each(function() {
       
       
@@ -38,24 +39,24 @@
       //Control the changing of the slide
       $presentation.changeSlide = function(newSlide) {
       
-      	$presentation.visibleSlide = $presentation.slides.filter(':visible');
-        $presentation.slideToShow = $presentation.slides.filter(':nth-child('+newSlide+')')
+        $presentation.visibleSlide = $presentation.slides.filter(':visible');
+        $presentation.slideToShow = $presentation.slides.filter('#' + config.slideIds[newSlide - 1]);
       
-      	switch ($presentation.options.transition) {
-        	case 'show/hide':
-						$presentation.visibleSlide.hide();
-						$presentation.slideToShow.show();
-						break;
-					case 'slide':
-						$presentation.visibleSlide.slideUp(500, function () {
-						    $presentation.slideToShow.slideDown(1000)
-						});
-						break;
-					default:
-						$presentation.visibleSlide.fadeOut(500);
-						$presentation.slideToShow.fadeIn(500)
-				}
-				        
+          switch ($presentation.options.transition) {
+            case 'show/hide':
+                        $presentation.visibleSlide.hide();
+                        $presentation.slideToShow.show();
+                        break;
+                    case 'slide':
+                        $presentation.visibleSlide.slideUp(500, function () {
+                            $presentation.slideToShow.slideDown(1000)
+                        });
+                        break;
+                    default:
+                        $presentation.visibleSlide.fadeOut(500);
+                        $presentation.slideToShow.fadeIn(500)
+                }
+                        
         $presentation.find('.'+$presentation.options.pagerClass).children('.current').removeClass('current');
         $presentation.find('.'+$presentation.options.pagerClass).children(':nth-child('+newSlide+')').addClass('current');
       };
@@ -71,13 +72,15 @@
       //Handle the previous and next functionality
       $presentation.prevNextClick = function(action) {
         if(action === 'prev') {
-          $presentation.count === 1 ? $presentation.count = $presentation.slides.length : $presentation.count--;            
+          $presentation.count === 1 ? $presentation.count = $presentation.slides.length : $presentation.count--;
+          var locationHash = config.slideIds[$presentation.count - 1];
         } else {
           $presentation.count === $presentation.slides.length ? $presentation.count = 1 : $presentation.count++;
+          var locationHash = config.slideIds[$presentation.count - 1];
         }
-        
+
         $presentation.changeSlide($presentation.count);
-        window.location.hash = '#'+$presentation.count;
+        window.location.hash = '#' + locationHash;
       };
       
       $presentation.addControls = function() {
@@ -91,15 +94,13 @@
         $presentation.append(navPager);
         
         if($presentation.currentHash) {
-          $presentation.find('.'+$presentation.options.pagerClass).children(':nth-child('+$presentation.currentHash+')').addClass('current');
-          $presentation.count = $presentation.currentHash;
+          $presentation.find('.'+$presentation.options.pagerClass).children('#'+$presentation.currentHash+'').addClass('current');
         } else {
           $presentation.find('.'+$presentation.options.pagerClass).children(':first-child').addClass('current');
-          $presentation.count = 1;
         }
 
         //Add in the previous/next links
-        $presentation.append('<ul class="'+$presentation.options.prevNextClass+'"><li><a href="#prev" class="prev">'+$presentation.options.prevText+'</a></li><li><a href="#next" class="next">'+$presentation.options.nextText+'</a></li>');
+        $presentation.append('<ul class="'+$presentation.options.prevNextClass+'"><li class="prev"><a href="#prev">'+$presentation.options.prevText+'</a></li><li class="next"><a href="#next">'+$presentation.options.nextText+'</a></li>');
         
         //When a specific page is clicked, go to that page
         $presentation.find('.'+$presentation.options.pagerClass).find('a').bind('click', function() {
@@ -108,7 +109,7 @@
         
         //When you click a previous/next link
         $presentation.find('.'+$presentation.options.prevNextClass).find('a').click(function() {
-          $presentation.prevNextClick($(this).attr('class'));
+          $presentation.prevNextClick($(this).parent().attr('class'));
           return false;
         });
         
@@ -133,10 +134,22 @@
         $presentation.options = $.extend(config, options);
         $presentation.slides = $presentation.find($presentation.options.slide);
         $presentation.currentHash = window.location.hash.substr(1);
-        
+
+        //Populate the slideIds array
+        $(config.slide).each(function() {
+            config.slideIds.push($(this).attr('id'));
+        });
+
         //Hide everything except the hash or the first
         if($presentation.currentHash) {
-          $presentation.slides.filter(':not(:nth-child('+$presentation.currentHash+'))').hide();
+          $presentation.slides.filter(':not(#'+$presentation.currentHash+')').hide();
+          $presentation.count = 1;
+          for (var i = 0; i < config.slideIds.length; i++) {
+              if ($presentation.currentHash == config.slideIds[i]) {
+                  $presentation.count = i + 1;
+                  break;
+              }
+          }
         } else {
           $presentation.slides.filter(':not(:first)').hide();
         }
