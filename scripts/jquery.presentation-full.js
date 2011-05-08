@@ -79,10 +79,10 @@
       //Handle the previous and next functionality
       $presentation.prevNextClick = function(action) {
         if(action === 'prev') {
-          $presentation.count === 1 ? $presentation.count = $presentation.slides.length : $presentation.count--;
+          $presentation.count === 1 ? $presentation.count = config.slideIds.length : $presentation.count--;
           var locationHash = config.slideIds[$presentation.count - 1];
         } else {
-          $presentation.count === $presentation.slides.length ? $presentation.count = 1 : $presentation.count++;
+          $presentation.count === config.slideIds.length ? $presentation.count = 1 : $presentation.count++;
           var locationHash = config.slideIds[$presentation.count - 1];
         }
 
@@ -91,7 +91,7 @@
       };
       
       $presentation.addControls = function() {
-        $presentation.numSlides = $presentation.slides.length;
+        $presentation.numSlides = config.slideIds.length;
         
         //Add in the pager
         var navPager = '<ol class="'+$presentation.options.pagerClass+'">';
@@ -144,7 +144,10 @@
 
         //Populate the slideIds array
         $(config.slide).each(function() {
-            config.slideIds.push($(this).attr('id'));
+			var id = $(this).attr('id');
+			if (id !== '') {
+				config.slideIds.push(id);
+			}
         });
 
         //Hide everything except the hash or the first
@@ -156,7 +159,7 @@
                   $presentation.count = i + 1;
                   break;
               }
-          }
+          }	
         } else {
           $presentation.slides.filter(':not(:first)').hide();
         }
